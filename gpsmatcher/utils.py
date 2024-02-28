@@ -1,7 +1,8 @@
 import os
 import pickle
-import networkx as nx
 from itertools import chain
+
+import networkx as nx
 
 
 def remove_unneccesarry_att(G, atts_to_keep = ['source', 'target', 'weight', 'geometry']):

@@ -1,9 +1,12 @@
-from scipy.sparse import csr_matrix
-import numpy as np
+import os
+
 import networkx as nx
+import numpy as np
 import pandas as pd
-from utils import load_param, save_param, print_step
-import os 
+from scipy.sparse import csr_matrix
+
+from gpsmatcher.utils import load_param, print_step, save_param
+
 
 def node2edge_graph(graph_nx, show_print=True):
     """

@@ -1,10 +1,12 @@
-import numpy as np
-import networkx as nx
-import pandas as pd
-import pygeohash_fast
-import pygeohash as pgh
-from utils import load_param, save_param
 import os
+
+import networkx as nx
+import numpy as np
+import pandas as pd
+import pygeohash as pgh
+import pygeohash_fast
+from gpsmatcher.utils import load_param, save_param
+
 
 def process_dic_cand_edges(G, radius = 150, save=True, folder_name="mm_input", show_print=True):
     """

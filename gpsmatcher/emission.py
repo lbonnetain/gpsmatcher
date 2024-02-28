@@ -1,10 +1,13 @@
-from scipy.sparse import csr_matrix
 import os
+
+from scipy.sparse import csr_matrix
+
 os.environ["USE_PYGEOS"] = "1"
 import geopandas as gpd
-import numpy as np
 import networkx as nx
+import numpy as np
 import pandas as pd
+
 
 def chunks_dist_computation(chunk_gps, cand_edges, radius=150, alpha=0.1):
     """

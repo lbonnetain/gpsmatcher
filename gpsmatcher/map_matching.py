@@ -1,16 +1,18 @@
-import networkx as nx
 import itertools
+
+import networkx as nx
+import numba
 import numpy as np
 import pandas as pd
-import numba
 import pygeohash_fast
-
-from graph import process_graph
-from transition import transition_matrix
-from precomputation_emission import process_dic_cand_edges
-from emission import emission_matrix
-from gps import process_gps
 from joblib import Parallel, delayed
+
+from gpsmatcher.emission import emission_matrix
+from gpsmatcher.gps import process_gps
+from gpsmatcher.graph import process_graph
+from gpsmatcher.precomputation_emission import process_dic_cand_edges
+from gpsmatcher.transition import transition_matrix
+
 
 def get_cand_edge_gps(gps, cand_edge):
     """

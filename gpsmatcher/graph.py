@@ -1,12 +1,16 @@
-from shapely.geometry import LineString, Point, MultiPoint
-from shapely.ops import split,snap
-import numpy as np
+import os
+
 import geopandas as gpd
 import networkx as nx
+import numpy as np
 import pandas as pd
 import pygeohash_fast
-import os
-from utils import load_param, save_param, remove_unneccesarry_att, print_step
+from shapely.geometry import LineString, MultiPoint, Point
+from shapely.ops import snap, split
+
+from gpsmatcher.utils import (load_param, print_step, remove_unneccesarry_att,
+                              save_param)
+
 
 def compute_edge_length(G, show_print=True):
     """
