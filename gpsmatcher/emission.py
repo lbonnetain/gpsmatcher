@@ -8,6 +8,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
+from gpsmatcher.utils import load_param, print_step, save_param
+
 
 def chunks_dist_computation(chunk_gps, cand_edges, radius=150, alpha=0.1):
     """
