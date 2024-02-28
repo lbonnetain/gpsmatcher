@@ -1,4 +1,4 @@
-# Foobar
+# gpsmatcher
 
 gpsmatcher is a Python library for map-matching GPS traces to a transportation network. 
 The library boasts high-speed processing, achieving approximately 5000 to 50000 points per second, depending on the specified parameters. 
