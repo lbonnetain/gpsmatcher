@@ -53,6 +53,10 @@ If not provided, the geometry of the edges will be simplified based on the nodes
 Here is the miniaml example code of matching gps points to a transportation network using networkx.
 
 ```python
+import pandas as pd
+import networkx as nx
+from gpsmatcher.map_matching import gps_file_mm
+
 edges_weight = [(3991897779, 11520092777, 11.33),
                  (11520092763, 11520092764, 13.64),
                  (11520092764, 11520092765, 14.04),
