@@ -80,11 +80,10 @@ def emission_matrix(gps, G, dic_geohash, dic_candidates, alpha = 0.1, radius = 1
         Emission matrix representing the likelihood of GPS points emitting from edges.
     """
     if show_print:
-        print_step("Start process transition")
+        print_step("Start process emission")
     geom_df = (nx.to_pandas_edgelist(G)).rename(columns={'edge_id': 'edge'})
     geom_df = gpd.GeoDataFrame(geom_df[['edge', 'geometry']], geometry=geom_df['geometry'], crs=4326)
     geom_df.to_crs(3035, inplace=True)
-
     cand_edges = pd.DataFrame.from_dict(dic_candidates.items())
     cand_edges.columns=['geohash', 'edge']
     cand_edges['geohash_int'] = cand_edges['geohash'].map(dic_geohash)
