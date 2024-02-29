@@ -42,7 +42,6 @@ def process_gps(gps, cand_edge):
     dic_candidates = {k: cand_edge[k] for k in cand_edge.keys() & all_geohashes}
 
     gps['edge'] = gps['geohash'].map(dic_candidates)
-    print(gps.dropna()['edge'].apply(len).mean())
     gps['geohash_int'] = gps['geohash'].map(dic_geohash)
     gps.set_index('geohash_int', inplace=True)
     gps = gpd.GeoDataFrame(gps, geometry=gpd.points_from_xy(gps['lon'], gps['lat']), crs=4326)
