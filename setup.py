@@ -26,5 +26,5 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPL-3.0)",
         "Operating System :: OS Independent",
     ],
-    keywords='map matching',
+    keywords=["map", "matching", "GPS", "gpsmatcher"],
 )
