@@ -20,10 +20,10 @@ setup(
     url='https://github.com/lbonnetain/gpsmatcher',
     description='Match a trace of GPS positions to a transportation graph',
     python_requires='>=3.6',
-    license='GPLv3+',
+    license='GPL-3.0',
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPL-3.0)",
         "Operating System :: OS Independent",
     ],
     keywords='map matching',
