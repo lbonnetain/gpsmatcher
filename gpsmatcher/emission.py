@@ -40,7 +40,7 @@ def chunks_dist_computation(chunk_gps, cand_edges, radius=150, alpha=0.1):
     dist_df['dist'] = dist_df['geometry'].distance(dist_df['geometry_edge'])
     dist_df.drop(columns=['geometry', 'geometry_edge'], inplace=True)
     dist_df = dist_df[dist_df['dist'] < radius]
-    dist_df['dist'] =  ((np.exp(-0.5* ((dist_df['dist'].values / 1000)/alpha)**2)/(np.sqrt(2*np.pi) * alpha))*10).astype(np.int8)
+    dist_df['dist'] =  ((np.exp(-0.5* ((dist_df['dist'].values / 1000)/alpha)**2)/(np.sqrt(2*np.pi) * alpha))*100).astype(np.int16)
     return(dist_df[['id','edge','dist']])
 
 
@@ -79,6 +79,9 @@ def emission_matrix(gps, G, dic_geohash, dic_candidates, alpha = 0.1, radius = 1
     emission_matrix : scipy.sparse.csr_matrix
         Emission matrix representing the likelihood of GPS points emitting from edges.
     """
+
+    with open('debug_emmision.pickle', 'wb') as handle:
+        pickle.dump((gps, G, dic_geohash, dic_candidates), handle, protocol=pickle.HIGHEST_PROTOCOL)
     if show_print:
         print_step("Start process emission")
     geom_df = (nx.to_pandas_edgelist(G)).rename(columns={'edge_id': 'edge'})
@@ -94,7 +97,6 @@ def emission_matrix(gps, G, dic_geohash, dic_candidates, alpha = 0.1, radius = 1
     cand_edges = cand_edges.merge(geom_df, on='edge')
     cand_edges.set_index('geohash_int', inplace=True)
     cand_edges.rename(columns={'geometry': 'geometry_edge'}, inplace=True)
-    
     if chunk:
         gps_splited = np.array_split(gps, nb_chunks)
         dist_df = []
@@ -108,9 +110,8 @@ def emission_matrix(gps, G, dic_geohash, dic_candidates, alpha = 0.1, radius = 1
         dist_df['dist'] = dist_df['geometry'].distance(dist_df['geometry_edge'])
         dist_df.drop(columns=['geometry', 'geometry_edge'], inplace=True)
         dist_df = dist_df[dist_df['dist'] < radius]
-        dist_df['dist'] =  ((np.exp(-0.5* ((dist_df['dist'].values / 1000)/alpha)**2)/(np.sqrt(2*np.pi) * alpha))*10).astype(np.int8)
-        
+        dist_df['dist'] =  ((np.exp(-0.5* ((dist_df['dist'].values / 1000)/alpha)**2)/(np.sqrt(2*np.pi) * alpha))*100).astype(np.int16)
+        print(dist_df)
     nb_rows, nb_cols = int(dist_df['id'].max() + 1), len(G.edges())
     emission_matrix = csr_matrix((dist_df['dist'].values, ( dist_df['id'].values, dist_df['edge'].values)), shape=(nb_rows,nb_cols))
-    print('done')
     return(emission_matrix)

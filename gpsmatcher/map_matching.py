@@ -14,6 +14,56 @@ from gpsmatcher.precomputation_emission import process_dic_cand_edges
 from gpsmatcher.transition import transition_matrix
 
 
+def get_predecessor(G, edge, edge_pre):
+    if edge[0] == edge_pre[1]:
+        return(edge_pre)
+    else:
+        path = nx.shortest_path(G, edge_pre[1], edge[0])
+        return((path[-2], path[-1]))
+
+def get_sucessor(G, edge, edge_suc):
+    if edge[1] == edge_suc[0]:
+        return(edge_suc)
+    else:
+        path = nx.shortest_path(G, edge[1], edge_suc[0])
+        return((path[0], path[1]))
+
+def get_new_edge_id(cand_edgeid, emit_p, edges):
+    nb_rows, nb_cols = np.shape(cand_edgeid)
+    new_edgeid = np.zeros((nb_rows,))
+    for i in range(nb_rows):
+        val_max = -1
+        for j in range(nb_cols):
+            edgeid = cand_edgeid[i, j]
+            if edgeid != -1:
+                val = emit_p[i, edgeid]
+                if val > val_max:
+                    val_max = val
+                    edgeid_min = edgeid
+        if val_max != -1:
+            new_edgeid[i] = edgeid_min
+        else:
+            new_edgeid[i] = edges[i]
+    return(new_edgeid)
+
+def correct_edge(graph, states, state, sub_edges, id2edges, edges2id, emit_p):
+    edge2state = dict(zip(sub_edges, states))
+    edges = [id2edges[sub_edges[int(i)]] for i in state]
+    edges_no_redundancy = [i[0] for i in itertools.groupby(edges)]
+    edges_no_redundancy_count = [len(list(i[1])) for i in itertools.groupby(edges)]
+
+    pre_edges = [-1]  + edges_no_redundancy[0:-1]
+    next_edges = edges_no_redundancy[1:] + [-1] 
+    sucessors = [get_sucessor(graph, edges_no_redundancy[i], next_edges[i]) for i in range(len(edges_no_redundancy) - 1)] + [-1]
+    predecessors = [-1] + [get_predecessor(graph, edges_no_redundancy[i], pre_edges[i]) for i in range(1, len(edges_no_redundancy))]  
+    cand_edges = [[sucessors[i], edges_no_redundancy[i], predecessors[i]] for i in range(len(sucessors) )] 
+    cand_edgeid = [[edge2state[edges2id[i]] if i!=-1 else -1 for i in sub_list ] for sub_list in cand_edges]
+    cand_edgeid = np.array(cand_edgeid)
+    cand_edgeid = np.repeat(cand_edgeid, edges_no_redundancy_count, axis=0)
+    new_edgeid = get_new_edge_id(cand_edgeid, emit_p, edges)
+    return(new_edgeid)
+
+
 def get_cand_edge_gps(gps, cand_edge):
     """
     Filter candidate edges based on GPS data.
@@ -101,12 +151,12 @@ def mm_precomputation(G, beta=1/500, radius=150, save=True, folder_name="mm_inpu
     id2edges : dict
         Dictionary mapping edge_id to edge tuples.
     """
-    G_mm, id2edges = process_graph(G, max_length=500, save=save, folder_name=folder_name, show_print=show_print)
+    G_mm, id2edges, edges2id = process_graph(G, max_length=500, save=save, folder_name=folder_name, show_print=show_print)
     trans = transition_matrix(G_mm, 120, beta=beta, save=save, folder_name=folder_name, show_print=show_print)
-    dic_candidates = process_dic_cand_edges(G_mm, radius = radius, save=True, folder_name=folder_name, show_print=show_print)
-    return(G_mm, trans, dic_candidates, id2edges)
+    dic_candidates = process_dic_cand_edges(G_mm, radius = radius, save=save, folder_name=folder_name, show_print=show_print)
+    return(G_mm, trans, dic_candidates, id2edges, edges2id)
 
-def mm_gps(gps, G_mm, trans, dic_candidates, id2edges, alpha=0.1, radius=150):
+def mm_gps(gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=0.1, radius=150):
     """
     Given the precomputation, map-match gps data (without multiprocessing)
 
@@ -143,11 +193,11 @@ def mm_gps(gps, G_mm, trans, dic_candidates, id2edges, alpha=0.1, radius=150):
     """
     gps, gps_mm, dic_geohash, dic_candidates = process_gps(gps, dic_candidates)
     emit = emission_matrix(gps, G_mm, dic_geohash, dic_candidates, alpha = alpha, radius = radius)
-    gps_mm['map_match'] = gps_mm.apply(lambda row: one_traj_mm(row['traj'], G_mm, trans, emit, id2edges, row['sub_edges'], row['first_emission'], row['last_emission']), axis=1)
+    gps_mm['map_match'] = gps_mm.apply(lambda row: one_traj_mm(row['traj'], G_mm, trans, emit, id2edges, edges2id, row['sub_edges'], row['first_emission'], row['last_emission']), axis=1)
     gps, gps_mm = format_result(gps, gps_mm)
     return(G_mm, gps, gps_mm)
 
-def mm_gps_parrallel(gps, G_mm, trans, dic_candidates, id2edges, alpha=0.1, radius=150, nb_cores=4):
+def mm_gps_parrallel(gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=0.1, radius=150, nb_cores=4):
     """
     Given the precomputation, map-match gps data (with multiprocessing)
 
@@ -187,7 +237,7 @@ def mm_gps_parrallel(gps, G_mm, trans, dic_candidates, id2edges, alpha=0.1, radi
     """
     dic_candidates = get_cand_edge_gps(gps, dic_candidates)
     all_chunks_gps =  np.array_split(gps, nb_cores)
-    result = Parallel(n_jobs=nb_cores, verbose=20)(delayed(mm_gps)(chunk_gps, G_mm, trans, dic_candidates, id2edges, alpha=alpha, radius=radius) for chunk_gps in all_chunks_gps)
+    result = Parallel(n_jobs=nb_cores, verbose=20)(delayed(mm_gps)(chunk_gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=alpha, radius=radius) for chunk_gps in all_chunks_gps)
     gps = pd.concat([i_result[0] for i_result in result])
     gps_mm = pd.concat([i_result[1] for i_result in result])
     return(G_mm, gps, gps_mm)
@@ -236,7 +286,7 @@ def big_gps_file_mm(G, gps, radius = 150, alpha = 0.1, beta=1/500, nb_rows_chunk
     gps_mm : pandas.DataFrame
         Map-matched GPS data. Each ID_trip with most likely path in the graph.
     """
-    G_mm, trans, dic_candidates, id2edges = mm_precomputation(G, beta=beta, radius=radius, save=save, folder_name=folder_name, show_print=show_print)
+    G_mm, trans, dic_candidates, id2edges, edges2id = mm_precomputation(G, beta=beta, radius=radius, save=save, folder_name=folder_name, show_print=show_print)
     
     nb_chunks = len(gps) // nb_rows_chunk
     all_chunks_gps =  np.array_split(gps, nb_chunks)
@@ -245,9 +295,9 @@ def big_gps_file_mm(G, gps, radius = 150, alpha = 0.1, beta=1/500, nb_rows_chunk
     for idx, chunk_gps in enumerate(all_chunks_gps):
         print("{}/{} chunk done".format(idx+1, nb_chunks))
         if parrallel:
-            chunk_gps, chunk_gps_mm = mm_gps_parrallel(chunk_gps, G_mm, trans, dic_candidates, id2edges, alpha=alpha, radius=radius, nb_cores=nb_cores)
+            _, chunk_gps, chunk_gps_mm = mm_gps_parrallel(chunk_gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=alpha, radius=radius, nb_cores=nb_cores)
         else:
-            chunk_gps, chunk_gps_mm = mm_gps(chunk_gps, G_mm, trans, dic_candidates, id2edges, alpha=alpha, radius=radius)
+            _, chunk_gps, chunk_gps_mm = mm_gps(chunk_gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=alpha, radius=radius)
         all_edges.extend(chunk_gps['edge'].values)
         all_gps_mm.append(chunk_gps_mm)
     
@@ -299,14 +349,14 @@ def gps_file_mm(G, gps, save=True, radius = 150, alpha = 0.1, beta=1/500, folder
     gps_mm : pandas.DataFrame
         Map-matched GPS data. Each ID_trip with most likely path in the graph
     """
-    G_mm, trans, dic_candidates, id2edges = mm_precomputation(G, beta=beta, radius=radius, save=save, folder_name=folder_name, show_print=show_print)
+    G_mm, trans, dic_candidates, id2edges, edges2id = mm_precomputation(G, beta=beta, radius=radius, save=save, folder_name=folder_name, show_print=show_print)
     if parrallel:
-        G_mm, gps, gps_mm = mm_gps_parrallel(gps, G_mm, trans, dic_candidates, id2edges, alpha=alpha, radius=radius, nb_cores=nb_cores)
+        G_mm, gps, gps_mm = mm_gps_parrallel(gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=alpha, radius=radius, nb_cores=nb_cores)
     else:
-        G_mm, gps, gps_mm = mm_gps(gps, G_mm, trans, dic_candidates, id2edges, alpha=alpha, radius=radius)
+        G_mm, gps, gps_mm = mm_gps(gps, G_mm, trans, dic_candidates, id2edges, edges2id, alpha=alpha, radius=radius)
     return(G_mm, gps, gps_mm)
 
-def one_traj_mm(GPS_traj, graph, transition_matrix, emission_matrix, id2edges, sub_edges, start, end):
+def one_traj_mm(GPS_traj, graph, transition_matrix, emission_matrix, id2edges, edges2id,sub_edges, start, end):
     """
     Perform map-matching on a single GPS trajectory.
 
@@ -345,7 +395,7 @@ def one_traj_mm(GPS_traj, graph, transition_matrix, emission_matrix, id2edges, s
         List of nodes representing the matched path on the road network graph.
     """
     try:
-        emit_p = (emission_matrix[start:end+1, : ][:, sub_edges].toarray())/10
+        emit_p = (emission_matrix[start:end+1, : ][:, sub_edges].toarray())/100
         trans_p = (transition_matrix[sub_edges, :][:, sub_edges].toarray())/100
         start_p = np.ones(len(sub_edges))/len(sub_edges)
         obs = np.array([i for i in range(len(GPS_traj))])
@@ -353,14 +403,17 @@ def one_traj_mm(GPS_traj, graph, transition_matrix, emission_matrix, id2edges, s
         (V,prob, state,path) = fast_viterbi(obs, states, start_p, trans_p, emit_p)
         if prob != 0:
             edges = [id2edges[sub_edges[int(i)]] for i in state]
-            edges_without_redundancy = [i[0] for i in itertools.groupby(edges)]
+            new_edges = correct_edge(graph, states, state, sub_edges,id2edges, edges2id,emit_p)
+            new_edges = [id2edges[sub_edges[int(i)]] for i in new_edges]
+            edges_without_redundancy = [i[0] for i in itertools.groupby(new_edges)]
+            #edges_without_redundancy = [i[0] for i in itertools.groupby(edges)] #be careful
             path = [nx.shortest_path(graph, edges_without_redundancy[i][1], edges_without_redundancy[i+1][0]) for i in range(len(edges_without_redundancy) - 1)]
             path = [edges_without_redundancy[0][0]] + [item for sublist in path for item in sublist] + [edges_without_redundancy[-1][1]]
-            return(edges, path)
+            return(new_edges, path)
         else:
             return([np.nan]*len(GPS_traj),[])
     except:
-        return(["Problem"], ["Problem"])
+        return(["Problem"]*len(GPS_traj), ["Problem"])
 
 @numba.jit(nopython=True)
 def fast_viterbi(obs, states, start_p, trans_p, emit_p):

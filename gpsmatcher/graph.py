@@ -305,6 +305,7 @@ def process_graph(G, max_length = 500, save=True, folder_name="mm_input", show_p
         edges = nx.to_pandas_edgelist(G)
         edges['edge'] = list(zip(edges["source"], edges["target"]))
         id2edges = edges.set_index("edge_id")['edge'].to_dict()
+        edges2id = edges.set_index("edge")['edge_id'].to_dict()
     
     else:
         G = remove_unneccesarry_att(G)
@@ -323,4 +324,4 @@ def process_graph(G, max_length = 500, save=True, folder_name="mm_input", show_p
         if save:
             save_param(folder_name, "graph", G)
     
-    return(G, id2edges)
+    return(G, id2edges, edges2id)
