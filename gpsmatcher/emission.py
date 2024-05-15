@@ -81,8 +81,8 @@ def emission_matrix(gps, G, dic_geohash, dic_candidates, alpha = 0.1, radius = 1
         Emission matrix representing the likelihood of GPS points emitting from edges.
     """
 
-    with open('debug_emmision.pickle', 'wb') as handle:
-        pickle.dump((gps, G, dic_geohash, dic_candidates), handle, protocol=pickle.HIGHEST_PROTOCOL)
+    #with open('debug_emmision.pickle', 'wb') as handle:
+    #    pickle.dump((gps, G, dic_geohash, dic_candidates), handle, protocol=pickle.HIGHEST_PROTOCOL)
     if show_print:
         print_step("Start process emission")
     geom_df = (nx.to_pandas_edgelist(G)).rename(columns={'edge_id': 'edge'})
