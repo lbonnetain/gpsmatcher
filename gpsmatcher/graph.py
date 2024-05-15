@@ -323,5 +323,4 @@ def process_graph(G, max_length = 500, save=True, folder_name="mm_input", show_p
 
         if save:
             save_param(folder_name, "graph", G)
-    
     return(G, id2edges, edges2id)

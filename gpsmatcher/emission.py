@@ -7,6 +7,7 @@ import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
+import pickle
 
 from gpsmatcher.utils import load_param, print_step, save_param
 
