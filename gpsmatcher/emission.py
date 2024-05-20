@@ -88,6 +88,7 @@ def emission_matrix(gps, G, dic_geohash, dic_candidates, alpha = 0.1, radius = 1
     geom_df = (nx.to_pandas_edgelist(G)).rename(columns={'edge_id': 'edge'})
     geom_df = gpd.GeoDataFrame(geom_df[['edge', 'geometry']], geometry=geom_df['geometry'], crs=4326)
     geom_df.to_crs(3035, inplace=True)
+    print(dic_candidates)
     cand_edges = pd.DataFrame.from_dict(dic_candidates.items())
     cand_edges.columns=['geohash', 'edge']
     cand_edges['geohash_int'] = cand_edges['geohash'].map(dic_geohash)
