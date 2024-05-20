@@ -110,7 +110,7 @@ def format_result(gps, gps_mm):
     gps_mm['edges'] = gps_mm.apply(lambda row: row['map_match'][0], axis=1)
     gps = gps[['lon', 'lat', 'ID_trip']]
     gps['edge'] = gps_mm['edges'].explode().reset_index(drop=True)
-    gps_mm = gps_mm["shortest_path_nodes"].reset_index()
+    #gps_mm = gps_mm["shortest_path_nodes"].reset_index()
     return(gps, gps_mm)
 
 def mm_precomputation(G, beta=1/500, radius=150, save=True, folder_name="mm_input", show_print=True):
