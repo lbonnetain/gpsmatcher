@@ -298,7 +298,7 @@ def process_graph(G, max_length = 500, save=True, folder_name="mm_input", show_p
         Dictionary mapping orignal edge to a new edge_id.
     """
     if show_print:
-        print_step("Start process graph")
+        print_step("Start the process graph")
         
     if save and (os.path.isfile(folder_name + '/graph.pickle')):
         G = load_param(folder_name, "graph", show_print=show_print)
