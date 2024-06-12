@@ -3,7 +3,20 @@ import os
 import networkx as nx
 import numpy as np
 import pandas as pd
-import pygeohash as pgh
+try:
+    import pygeohash as pgh
+except ImportError:
+    raise ImportError(
+        "The 'pygeohash' package is required for this module but is not installed.\n"
+        "Please install it directly from GitHub:\n"
+        "pip install 'git+https://github.com/wdm0006/pygeohash.git@a89e6e794f0dde4e066048ec16c867e945a680c1'"
+    )
+if not hasattr(pgh, 'get_adjacent'):
+    raise ImportError(
+        "The installed version of 'pygeohash' does not have the required 'get_adjacent' method.\n"
+        "Please install the correct version directly from GitHub:\n"
+        "pip install 'git+https://github.com/wdm0006/pygeohash.git@a89e6e794f0dde4e066048ec16c867e945a680c1'"
+    )
 import pygeohash_fast
 from gpsmatcher.utils import load_param, save_param
 
